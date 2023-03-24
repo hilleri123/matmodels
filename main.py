@@ -8,12 +8,14 @@ def default_params() -> RocketParamsType:
     stage0 = RocketStage(G = 1, uG = 2, M_fuel = 2, M_const = 1)
 
     params.stages.append(stage0)
+    return params
 
 
 def main():
 
     r = Rocket(default_params())
     r.curr_stage(0)
+    r.calc(0.1,10)
 
 
 if __name__ == "__main__":
