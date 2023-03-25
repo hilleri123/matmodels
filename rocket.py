@@ -5,10 +5,13 @@ from dataclasses import dataclass, field
 from typing import NewType, List, Callable
 import math
 
-F_g = 9.8
+
+def F_g(h: float = 6400):
+    return 6.67*5.972*(10**5) / ((6400 + h)**2)
 
 def F_c(v: float, h: float):
     return 0
+    #return 10*0.23*(10**(-0.00000125*h)) * (v**2)
 
 @dataclass
 class RocketStage:
@@ -18,7 +21,7 @@ class RocketStage:
     M_const: float = 0
 
     def max_time(self) -> float:
-        return self.M_fuel * self.uG * F_g / self.G
+        return self.M_fuel * self.uG * F_g() / self.G
 
 RocketStageType = NewType('RocketStageType', RocketStage)
 
@@ -26,7 +29,7 @@ RocketStageType = NewType('RocketStageType', RocketStage)
 @dataclass
 class RocketParams:
     M_const: float = 0
-    v_start: float = 100
+    v_start: float = 1000
     stages: List[RocketStageType] = field(default_factory=list)
 
     def M(self, t:float) -> float:
@@ -39,7 +42,7 @@ class RocketParams:
             elif t_tmp < 0:
                 m += stage.M_const + stage.M_fuel 
             else:
-                m += stage.M_const + stage.M_fuel - stage.G * t_tmp / stage.uG / F_g
+                m += stage.M_const + stage.M_fuel - stage.G * t_tmp / stage.uG / F_g()
             t_tmp -= t_max
         return m
 
@@ -88,14 +91,15 @@ class Rocket:
 
             prev = self._calcs.iloc[idx-1 if idx-1 >= 0 else 0] #Предыдущие значения
 
-            self._calcs['x'][idx] = prev['x'] + prev['v']*math.sin(prev['angle'])
-            self._calcs['h'][idx] = prev['h'] + prev['v']*math.cos(prev['angle'])
+            self._calcs['x'][idx] = prev['x'] + prev['v']*math.sin(prev['angle']) / 1000
+            self._calcs['h'][idx] = prev['h'] + prev['v']*math.cos(prev['angle']) / 1000
 
             if stage is not None:
                 G = stage.G
             else:
                 G = 0
-            self._calcs['v'][idx] = prev['v'] + G - F_c(v=prev['v'], h=prev['h']) - F_g*math.cos(prev['angle'])
+            self._calcs['v'][idx] = prev['v'] + G / prev['m'] - F_c(v=prev['v'], h=prev['h']) / prev['m'] - F_g(prev['h'])*math.cos(prev['angle'])
+            print(prev['v'], G/prev['m'], F_c(v=prev['v'], h=prev['h'])/prev['m'], F_g(prev['h'])*math.cos(prev['angle']))
 
 
         print(self._calcs)
