@@ -6,7 +6,7 @@ from typing import NewType, List, Callable
 import math
 import numpy.typing as npt
 
-from graph import Calculable
+from common import Calculable, CalculableType
 
 
 def F_g(h: float = 6400) -> float:
@@ -20,6 +20,7 @@ def F_c(v: float, h: float) -> float:
 
 @dataclass
 class RocketStage:
+    name: str = ''
     G: float = 1
     uG: float = 1
     M_fuel: float = 0
@@ -35,7 +36,7 @@ RocketStageType = NewType('RocketStageType', RocketStage)
     
 @dataclass
 class RocketParams:
-    M_const: float = 0
+    M_const: float = 1
     v_start: float = 1000
     stages: List[RocketStageType] = field(default_factory=list)
 
@@ -55,13 +56,24 @@ class RocketParams:
         return m
 
 
+@dataclass
+class RocketStatus:
+    t: float = 0
+    m: float = 0
+    x: float = 0
+    h: float = 0
+    angle: float = 0
+    v: float = 0
+
+
 RocketParamsType = NewType('RocketStageType', RocketStage)
+RocketStatusType = NewType('RocketStatusType', RocketStatus)
 
 
 class Rocket(Calculable):
-    def __init__(self, params: RocketParamsType = None, angle_func: Callable[[float], float] = lambda _: 0.):
+    def __init__(self, params: RocketParamsType = None, angle_func: Callable[[RocketStatusType], float] = lambda _: 0.):
         self._max_times = np.zeros(0)
-        self._calcs = pd.DataFrame({"v":np.zeros(0),"m":np.zeros(0),"h":np.zeros(0),"x":np.zeros(0),"angle":np.zeros(0),"t":np.zeros(0)})
+        self._calcs = pd.DataFrame({"t":np.zeros(0),"v":np.zeros(0),"m":np.zeros(0),"h":np.zeros(0),"x":np.zeros(0),"angle":np.zeros(0),})
         self.set_params(params)
         self.set_angle_func(angle_func)
 
@@ -77,7 +89,7 @@ class Rocket(Calculable):
             self._max_times[idx] = stage.max_time()
 
 
-    def set_angle_func(self, func : Callable[[float], float]) -> None:
+    def set_angle_func(self, func : Callable[[RocketStatusType], float]) -> None:
         self._angle_func = func
 
 
@@ -97,7 +109,8 @@ class Rocket(Calculable):
             raise RuntimeError("Rocket is undefined")
         self._step = step
         all_time = sum(self._max_times) + after
-        steps = int(all_time / step)
+        steps = int(all_time / step) + 1
+        self._calcs = pd.DataFrame({"t":np.zeros(0),"v":np.zeros(0),"m":np.zeros(0),"h":np.zeros(0),"x":np.zeros(0),"angle":np.zeros(0),})
         self._calcs[self._calcs.columns] = np.zeros((steps, self._calcs.shape[1]))
         self._calcs['v'][0] = self._params.v_start
         self._calcs['t'] = np.arange(0, all_time, step)
@@ -106,9 +119,14 @@ class Rocket(Calculable):
             self._calcs['m'][idx] = self._params.M(t) #Не самое оптимальное решение, но мне плевать
 
             prev = self._calcs.iloc[idx-1 if idx-1 >= 0 else 0] #Предыдущие значения
+            
+            status = RocketStatus(**prev)
+            self._calcs['angle'][idx] = self._angle_func(status)
 
             self._calcs['x'][idx] = prev['x'] + prev['v']*math.sin(prev['angle']) / 1000
             self._calcs['h'][idx] = prev['h'] + prev['v']*math.cos(prev['angle']) / 1000
+            if self._calcs['h'][idx] < 0:
+                self._calcs['h'][idx] = 0
 
             if stage is not None:
                 G = stage.G
