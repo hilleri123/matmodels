@@ -1,5 +1,9 @@
 #!/usr/bin/python3
 
+import sys
+from PyQt5.QtWidgets import QApplication, QMainWindow
+
+from graph import Graphs
 from rocket import *
 
 def default_params() -> RocketParamsType:
@@ -16,9 +20,19 @@ def default_params() -> RocketParamsType:
 
 
 def main():
+    app = QApplication(sys.argv)
+    m = QMainWindow()
+    g = Graphs()
+    m.setCentralWidget(g)
+
 
     r = Rocket(default_params())
-    r.calc(0.1,10)
+    g.register_calculables([r])
+    #r.calc(0.1,10)
+
+
+    m.show()
+    app.exec()
 
 
 if __name__ == "__main__":

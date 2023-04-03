@@ -12,8 +12,8 @@ else
 	python3 -m venv venv
 fi
 
-
 source "$ENV_FILE"
 pip3 install -r requirements.txt
 
+export MPLBACKEND=Agg
 
