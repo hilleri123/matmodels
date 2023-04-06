@@ -19,6 +19,19 @@ def F_c(v: float, h: float) -> float:
 
 
 @dataclass
+class RocketStatus:
+    t: float = 0
+    m: float = 0
+    x: float = 0
+    h: float = 0
+    angle: float = 0
+    v: float = 0
+
+
+RocketStatusType = NewType('RocketStatusType', RocketStatus)
+
+
+@dataclass
 class RocketStage:
     name: str = ''
     G: float = 1
@@ -38,6 +51,7 @@ RocketStageType = NewType('RocketStageType', RocketStage)
 class RocketParams:
     M_const: float = 1
     v_start: float = 1000
+    angle_func: Callable[[RocketStatusType], float] = lambda _ : 0
     stages: List[RocketStageType] = field(default_factory=list)
 
 
@@ -56,26 +70,14 @@ class RocketParams:
         return m
 
 
-@dataclass
-class RocketStatus:
-    t: float = 0
-    m: float = 0
-    x: float = 0
-    h: float = 0
-    angle: float = 0
-    v: float = 0
-
-
 RocketParamsType = NewType('RocketStageType', RocketStage)
-RocketStatusType = NewType('RocketStatusType', RocketStatus)
 
 
 class Rocket(Calculable):
-    def __init__(self, params: RocketParamsType = None, angle_func: Callable[[RocketStatusType], float] = lambda _: 0.):
+    def __init__(self, params: RocketParamsType = None):
         self._max_times = np.zeros(0)
         self._calcs = pd.DataFrame({"t":np.zeros(0),"v":np.zeros(0),"m":np.zeros(0),"h":np.zeros(0),"x":np.zeros(0),"angle":np.zeros(0),})
         self.set_params(params)
-        self.set_angle_func(angle_func)
 
 
     def set_params(self, params: RocketParamsType) -> None:
@@ -87,10 +89,6 @@ class Rocket(Calculable):
         self._max_times = np.zeros(len(self._params.stages))
         for idx, stage in enumerate(self._params.stages):
             self._max_times[idx] = stage.max_time()
-
-
-    def set_angle_func(self, func : Callable[[RocketStatusType], float]) -> None:
-        self._angle_func = func
 
 
     def curr_stage(self, t:float) -> RocketStageType:
@@ -121,7 +119,7 @@ class Rocket(Calculable):
             prev = self._calcs.iloc[idx-1 if idx-1 >= 0 else 0] #Предыдущие значения
             
             status = RocketStatus(**prev)
-            self._calcs['angle'][idx] = self._angle_func(status)
+            self._calcs['angle'][idx] = self._params.angle_func(status)
 
             self._calcs['x'][idx] = prev['x'] + prev['v']*math.sin(prev['angle']) / 1000
             self._calcs['h'][idx] = prev['h'] + prev['v']*math.cos(prev['angle']) / 1000

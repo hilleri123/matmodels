@@ -1,11 +1,12 @@
 
-from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QPushButton, QLabel, QStyle, QScrollArea
+from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QPushButton, QLabel, QStyle, QScrollArea, QLineEdit
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import pyqtSignal
 import numpy as np
 import numpy.typing as npt
 from typing import List, NewType, Any
 import sip
+import re
 
 from rocket import RocketParams, RocketParamsType, RocketStage, RocketStageType, Rocket
 from common import MyLineEdit
@@ -118,6 +119,16 @@ class RocketParamsWidget(ParamsWidget):
         layout.addWidget(self._v_start)
         main_layout.addLayout(layout)
 
+        layout = QHBoxLayout()
+        self._angle_func = QLineEdit()
+        self._angle_func.setText('0')
+        self._angle_func.textChanged.connect(self.text_changed_sig)
+        label = QLabel('angle_func(t, m, x, h, angle, v) =', self)
+        label.setBuddy(self._angle_func)
+        layout.addWidget(label)
+        layout.addWidget(self._angle_func)
+        main_layout.addLayout(layout)
+
         self._add_button = QPushButton("add stage")
         self._add_button.clicked.connect(self.__add_stage)
         main_layout.addWidget(self._add_button)
@@ -154,6 +165,7 @@ class RocketParamsWidget(ParamsWidget):
         r = RocketParams(
                 M_const = float(self._M_const.text()),
                 v_start = float(self._v_start.text()),
+                angle_func = eval(__func_text())
                 )
 
         for i in range(self._stage_layout.count()):
@@ -183,4 +195,9 @@ class RocketParamsWidget(ParamsWidget):
 
     def is_text_changed(self) -> bool:
         return self._text_changed
+
+
+    def __func_text(self) -> str:
+        res = self._angle_func.text()
+        return res
 
