@@ -1,7 +1,16 @@
-from typing import List, Any, NewType
+from typing import List, Any, NewType, ClassVar, Dict
+from typing_extensions import Protocol
+from dataclasses import dataclass
 import numpy.typing as npt
 from PyQt5.QtWidgets import QLineEdit
 from PyQt5.QtGui import QDoubleValidator
+import re
+import math
+
+
+class IsDataclass(Protocol):
+    __dataclass_fields__: ClassVar[Dict] 
+
 
 class Calculable:
     def set_params(self, params: Any) -> None:
@@ -34,5 +43,26 @@ class MyLineEdit(QLineEdit):
         val.setBottom(starts)
         self.setValidator(val)
         self.setText(str(value))
+
+
+_symbols = r'[\s+\-*/<>=%&|\(\)]'
+
+def replace_math_functions(text: str) -> str:
+    text = f' {text} '
+    for math_func in dir(math):
+        if '__' in math_func:
+            continue
+        text = re.sub(f'({_symbols})((math\.)?{math_func})({_symbols})', f'\\1math.{math_func}\\4', text)
+    return text
+
+        
+def replace_params(text: str, params_name: str, params: IsDataclass) -> str:
+    text = f' {text} '
+    for param in dir(params):
+        if '__' in param:
+            continue
+        text = re.sub(f'({_symbols})(({params_name}\.)?{param})({_symbols})', f'\\1{params_name}.{param}\\4', text)
+    return text
+
 
 

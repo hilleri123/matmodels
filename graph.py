@@ -9,6 +9,7 @@ import matplotlib.backends.qt_compat
 from matplotlib.backends.backend_qt5agg import (
     FigureCanvas, NavigationToolbar2QT as NavigationToolbar)
 from matplotlib.figure import Figure
+import matplotlib.pyplot as plt
 
 from params import create_params_widget
 from common import Calculable, CalculableType, MyLineEdit
@@ -22,6 +23,7 @@ class Graph(QWizardPage):
         #self.something_changed_sig.connect(self.__something_changed)
         self._need_to_recalc = True
         self._calc = calc
+        self._ax = None
         main_layout = QVBoxLayout()
         self.setLayout(main_layout)
         layout = QHBoxLayout()
@@ -29,9 +31,11 @@ class Graph(QWizardPage):
         if not self._params is None:
             layout.addWidget(self._params)
         
+        tmp_layout = QVBoxLayout()
         self._canvas = FigureCanvas(Figure(figsize=(5, 3)))
-        layout.addWidget(self._canvas)
-        layout.addWidget(NavigationToolbar(self._canvas, self))
+        tmp_layout.addWidget(self._canvas)
+        tmp_layout.addWidget(NavigationToolbar(self._canvas, self))
+        layout.addLayout(tmp_layout)
         main_layout.addLayout(layout)
 
         layout = QHBoxLayout()
@@ -106,9 +110,17 @@ class Graph(QWizardPage):
     def plot_graph(self) -> None:
         if self._need_to_recalc:
             self.calc_graph()
-        self._canvas.figure.clf()
-        ax = self._canvas.figure.subplots()
-        ax.plot(self._calc.get_axis(self._x.currentText()), self._calc.get_axis(self._y.currentText()), ".")
+        if self._ax is None:
+            self._ax = self._canvas.figure.subplots()
+        else:
+            self._ax.clear()
+        y = self._y.currentText()
+        x = self._x.currentText()
+        self._ax.set_ylabel(y)
+        self._ax.set_xlabel(x)
+        self._ax.set_title(f'{y}({x})')
+        self._ax.plot(self._calc.get_axis(x), self._calc.get_axis(y))
+        self._canvas.draw()
 
 
     def __something_changed(self) -> None:

@@ -7,9 +7,10 @@ import numpy.typing as npt
 from typing import List, NewType, Any
 import sip
 import re
+import math
 
-from rocket import RocketParams, RocketParamsType, RocketStage, RocketStageType, Rocket
-from common import MyLineEdit
+from rocket import RocketParams, RocketParamsType, RocketStage, RocketStageType, Rocket, RocketStatus
+from common import MyLineEdit, replace_params, replace_math_functions
 
 
 class ParamsWidget(QWidget):
@@ -121,7 +122,7 @@ class RocketParamsWidget(ParamsWidget):
 
         layout = QHBoxLayout()
         self._angle_func = QLineEdit()
-        self._angle_func.setText('0')
+        self._angle_func.setText(r'angle + 0.08 if h > 10 and angle < atan(1)*2 else angle')
         self._angle_func.textChanged.connect(self.text_changed_sig)
         label = QLabel('angle_func(t, m, x, h, angle, v) =', self)
         label.setBuddy(self._angle_func)
@@ -165,7 +166,7 @@ class RocketParamsWidget(ParamsWidget):
         r = RocketParams(
                 M_const = float(self._M_const.text()),
                 v_start = float(self._v_start.text()),
-                angle_func = eval(__func_text())
+                angle_func = eval(self.__func_text())
                 )
 
         for i in range(self._stage_layout.count()):
@@ -199,5 +200,7 @@ class RocketParamsWidget(ParamsWidget):
 
     def __func_text(self) -> str:
         res = self._angle_func.text()
-        return res
+        res = replace_math_functions(res)
+        res = replace_params(res, 'x', RocketStatus)
+        return f'lambda x : {res}'
 
