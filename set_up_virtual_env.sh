@@ -13,6 +13,7 @@ else
 fi
 
 source "$ENV_FILE"
+echo "enter env"
 pip3 install -r requirements.txt
 
 export MPLBACKEND=Agg
