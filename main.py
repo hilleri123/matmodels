@@ -5,6 +5,7 @@ from PyQt5.QtWidgets import QApplication, QMainWindow
 
 from graph import Graphs
 from rocket import *
+from economy import *
 
 def default_params() -> RocketParamsType:
     params = RocketParams(M_const = 9500, v_start = 1000)
@@ -26,8 +27,7 @@ def main():
     m.setCentralWidget(g)
 
 
-    r = Rocket(default_params())
-    g.register_calculables([r])
+    g.register_calculables([Rocket(), Economy()])
     #r.calc(0.1,10)
 
 

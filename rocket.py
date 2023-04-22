@@ -74,7 +74,7 @@ RocketParamsType = NewType('RocketStageType', RocketStage)
 
 
 class Rocket(Calculable):
-    def __init__(self, params: RocketParamsType = None):
+    def __init__(self, params: RocketParamsType = RocketParams()):
         self._max_times = np.zeros(0)
         self._calcs = pd.DataFrame({"t":np.zeros(0),"v":np.zeros(0),"m":np.zeros(0),"h":np.zeros(0),"x":np.zeros(0),"angle":np.zeros(0),})
         self.set_params(params)

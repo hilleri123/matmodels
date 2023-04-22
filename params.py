@@ -10,6 +10,7 @@ import re
 import math
 
 from rocket import RocketParams, RocketParamsType, RocketStage, RocketStageType, Rocket, RocketStatus
+from economy import Economy, EconomyParams, EconomyParamsType
 from common import MyLineEdit, replace_params, replace_math_functions
 
 
@@ -32,6 +33,8 @@ ParamsWidgetType = NewType('ParamsWidgetType', ParamsWidget)
 def create_params_widget(cls: Any, *args, **kwargs) -> ParamsWidgetType:
     if cls is Rocket:
         return RocketParamsWidget(*args, **kwargs)
+    if cls is Economy:
+        return None
     return None
 
 
@@ -204,3 +207,6 @@ class RocketParamsWidget(ParamsWidget):
         res = replace_params(res, 'x', RocketStatus)
         return f'lambda x : {res}'
 
+
+class EconomyWidget(ParamsWidget):
+    pass
