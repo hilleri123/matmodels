@@ -6,7 +6,7 @@ from PyQt5.QtWidgets import QLineEdit
 from PyQt5.QtGui import QDoubleValidator
 import re
 import math
-
+import matplotlib.pyplot as plt
 
 class IsDataclass(Protocol):
     __dataclass_fields__: ClassVar[Dict] 
@@ -31,6 +31,13 @@ class Calculable:
 
     def title(self) -> str:
         return 'Title'
+
+
+    def plot(self, ax: plt.Axes, y: str, x: str) -> None:
+        ax.set_ylabel(y)
+        ax.set_xlabel(x)
+        ax.set_title(f'{y}({x})')
+        ax.plot(self.get_axis(x), self.get_axis(y))
 
 
 CalculableType = NewType('CalculableType', Calculable)

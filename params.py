@@ -15,6 +15,7 @@ from common import MyLineEdit, replace_params, replace_math_functions
 
 
 class ParamsWidget(QWidget):
+    text_changed_sig = pyqtSignal()
     def __init__(self, *args, **kwargs):
         super(QWidget, self).__init__(*args, **kwargs)
 
@@ -34,7 +35,7 @@ def create_params_widget(cls: Any, *args, **kwargs) -> ParamsWidgetType:
     if cls is Rocket:
         return RocketParamsWidget(*args, **kwargs)
     if cls is Economy:
-        return None
+        return EconomyWidget(*args, **kwargs)
     return None
 
 
@@ -48,6 +49,11 @@ def default_rocket_params() -> RocketParamsType:
     params.stages.append(stage0)
     params.stages.append(stage1)
     params.stages.append(stage2)
+    return params
+
+
+def default_economy_params() -> EconomyParamsType:
+    params = EconomyParams(S_a=1, S_b=2, D_a=3, D_b=4, y_per_t=1, p_0=11, d=0.01)
     return params
 
 
@@ -98,10 +104,8 @@ class StageWidget(QWidget):
 
 
 class RocketParamsWidget(ParamsWidget):
-    text_changed_sig = pyqtSignal()
     def __init__(self, *args, **kwargs):
         super(QWidget, self).__init__(*args, **kwargs)
-        self.text_changed_sig.connect(self.__text_changed)
         main_layout = QVBoxLayout()
         self.setLayout(main_layout)
 
@@ -162,7 +166,6 @@ class RocketParamsWidget(ParamsWidget):
 
         for stage in self._rocket_params.stages:
             self.__add_stage(stage)
-        self._text_changed = False
 
 
     def params(self) -> RocketParamsType:
@@ -193,14 +196,6 @@ class RocketParamsWidget(ParamsWidget):
         sip.delete(sender)
         
 
-    def __text_changed(self) -> None:
-        self._text_changed = True
-
-
-    def is_text_changed(self) -> bool:
-        return self._text_changed
-
-
     def __func_text(self) -> str:
         res = self._angle_func.text()
         res = replace_math_functions(res)
@@ -209,4 +204,30 @@ class RocketParamsWidget(ParamsWidget):
 
 
 class EconomyWidget(ParamsWidget):
-    pass
+    def __init__(self, *args, **kwargs):
+        super(ParamsWidget, self).__init__(*args, **kwargs)
+        main_layout = QVBoxLayout()
+        self.setLayout(main_layout)
+
+        self._fields = {}
+        for field in EconomyParams().__dataclass_fields__.keys():
+            layout = QHBoxLayout()
+            self._fields[field] = MyLineEdit(1)
+            self._fields[field].textChanged.connect(self.text_changed_sig)
+            label = QLabel(field, self)
+            label.setBuddy(self._fields[field])
+            layout.addWidget(label)
+            layout.addWidget(self._fields[field])
+            main_layout.addLayout(layout)
+        self.set_params(default_economy_params())
+
+
+    def set_params(self, params: EconomyParamsType) -> None:
+        for field_n, field in self._fields.items():
+            val = eval('params.' + field_n)
+            field.setText(str(val))
+
+
+    def params(self) -> EconomyParamsType:
+        args = {field_n : float(field.text()) for field_n, field in self._fields.items()}
+        return EconomyParams(**args)

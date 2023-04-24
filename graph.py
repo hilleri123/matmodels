@@ -75,6 +75,7 @@ class Graph(QWizardPage):
 
         main_layout.addLayout(layout)
         self.__combo()
+        self.setTitle(self._calc.title())
 
 
     def __combo(self) -> None:
@@ -116,10 +117,7 @@ class Graph(QWizardPage):
             self._ax.clear()
         y = self._y.currentText()
         x = self._x.currentText()
-        self._ax.set_ylabel(y)
-        self._ax.set_xlabel(x)
-        self._ax.set_title(f'{y}({x})')
-        self._ax.plot(self._calc.get_axis(x), self._calc.get_axis(y))
+        self._calc.plot(self._ax, y, x)
         self._canvas.draw()
 
 
