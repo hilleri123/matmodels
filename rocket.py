@@ -143,3 +143,5 @@ class Rocket(Calculable):
         return self._calcs[axis]
 
 
+    def title(self) -> str:
+        return 'Rocket'
