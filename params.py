@@ -211,6 +211,8 @@ class EconomyWidget(ParamsWidget):
 
         self._fields = {}
         for field in EconomyParams().__dataclass_fields__.keys():
+            if 'd' == field:
+                continue
             layout = QHBoxLayout()
             self._fields[field] = MyLineEdit(1)
             self._fields[field].textChanged.connect(self.text_changed_sig)
